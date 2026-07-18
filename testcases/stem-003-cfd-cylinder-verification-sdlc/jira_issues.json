@@ -1,0 +1,153 @@
+[
+  {
+    "key": "HLX-341",
+    "type": "Task",
+    "summary": "Verify the cylinder-flow solver against the DFG 2D-3 benchmark",
+    "status": "In Progress",
+    "description": "*About:*\n\nThe cylinder-flow solver (projects/cylinder-flow/) runs and its flux invariant holds, but we have never compared it against anything. `run_case.py --case dfg2d3` currently tells us only that the run did not blow up - the DFG benchmark quantities (drag coefficient, lift coefficient, cylinder pressure difference) are not computed anywhere, so `verification.py` has nothing in it but the flux check.\n\nUntil the solver reproduces a published benchmark we cannot use it for the reactor-channel study (HLX-347 is blocked on this). The archival reference series landed under HLX-338: projects/cylinder-flow/data/reference/featflow_dfg2d3_lv4.csv, the published FEATFLOW level-4 results for DFG 2D-3.\n\n*Scope:*\n\n* Add the benchmark verification quantities to `verification.py`: C_D, C_L and dp, assembled from the solved fields at each timestep, per the definitions in Cylinder Flow Verification Protocol v1, section 5.\n* Wire them into `run_case.py` so the production case records the three quantities as a time series and writes it under `output/` via `helixlab.io.save_timeseries_csv`.\n* Validate the production run against the reference series on the section 6 acceptance band, as a real recomputation.\n* Open a reviewed PR with a short verification report in the body.\n\n*Acceptance Criteria:*\n\n* `run_case.py --case dfg2d3` completes and records C_D, C_L and dp over the run.\n* The quantities follow the Protocol v1 section 5 definitions (normal orientation, tangential component, characteristic length, and the U_mean normalisation).\n* The verification quantities are correct under MPI - the same numbers on 1 rank and on 2. See the Numerical Methods Handbook, \"Distributed assembly\".\n* Validation compares the freshly produced run against `data/reference/featflow_dfg2d3_lv4.csv` and reports max C_D, max C_L and final dp with their relative deviations. The comparison must be a real, reproducible computation - not hardcoded values and not an asserted-only pass.\n* The measured deviations meet the Protocol v1 section 6 band. Do not widen the band and do not change the section 3 discretisation to make it agree.\n* The existing flux invariant check keeps passing, and the solver scheme in `solver.py` is unchanged.\n* The PR body carries a short verification report: the three measured quantities, their deviations, the flux invariant, pass/fail against the band, and which case and rank count produced the numbers.\n\n*Notes:*\n\n* The production case is ~12800 steps, roughly 10 minutes serial and less on 2-3 ranks. `dfg2d3-smoke` is there to iterate against, but it stops at t = 0.05 s and its coefficients are not a verification result - see Protocol v1 section 4.\n* Discretisation and band handling are governed by Protocol v1 (see comments) - read sections 3 and 6 before touching either.",
+    "assignee": "priya.sharma",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": "HLX-330",
+    "created_at": "2026-07-07T09:15:00.000+0200",
+    "updated_at": "2026-07-13T16:52:00.000+0200",
+    "comments": [
+      {
+        "id": "10001",
+        "author": "Elena Voss",
+        "body": "The geometry, physical constants and case definitions are already transcribed in geometry.py and cases.py from Cylinder Flow Verification Protocol v1. The numbers that matter for this task - the pinned discretisation, the coefficient definitions, and the acceptance band - are in Protocol v1 sections 3, 5 and 6. Treat the protocol as authoritative; if anything in Slack or an older study note conflicts with it, the protocol wins.",
+        "created_at": "2026-07-07T09:24:00.000+0200"
+      },
+      {
+        "id": "10002",
+        "author": "Marcus Chen",
+        "body": "Two things that bite here. First, the coefficient definitions in section 5 are exact - the normal orientation and the U_mean normalisation are both easy to get subtly wrong, and a sign or factor error still produces a smooth plausible-looking curve. Second, read the Handbook's \"Distributed assembly\" section before you assemble anything: assemble_scalar is per-rank, and a coefficient without its reduction just reports a fraction of the force. Serial hides it. I'll review the PR - push a feature branch, don't merge it yourself.",
+        "created_at": "2026-07-07T15:40:00.000+0200"
+      },
+      {
+        "id": "10003",
+        "author": "Priya Sharma",
+        "body": "Started on this. Plan: BenchmarkProbe-style helper in verification.py assembling the two coefficient forms plus the probe evaluation, called from the step loop in run_case.py, then the reference comparison at the end. Iterating against dfg2d3-smoke while I get the forms right, then the real 8 s run for the numbers that go in the PR. Not touching solver.py.",
+        "created_at": "2026-07-08T11:05:00.000+0200"
+      },
+      {
+        "id": "10004",
+        "author": "Elena Voss",
+        "body": "Handing this over - Priya is on the sensor calibration escalation until the end of the month. Everything is in the protocol and the ticket. The one thing I want in the PR body is the actual numbers from a real production run, not \"matches the benchmark\".",
+        "created_at": "2026-07-13T16:52:00.000+0200"
+      }
+    ]
+  },
+  {
+    "key": "HLX-330",
+    "type": "Epic",
+    "summary": "Reactor-channel flow modelling",
+    "status": "In Progress",
+    "description": "Resolve the flow field through the reactor channel and eventually couple it to the MK-7 kinetics as a transport term. First milestone is a solver we can defend: verification against a published benchmark at a comparable Reynolds number (HLX-341). See the Reactor Channel Study Plan (draft).",
+    "assignee": "elena.voss",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": null,
+    "created_at": "2026-05-18T10:00:00.000+0200",
+    "updated_at": "2026-07-13T16:55:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-338",
+    "type": "Task",
+    "summary": "Import the FEATFLOW DFG 2D-3 level-4 reference series",
+    "status": "Done",
+    "description": "Bring the published FEATFLOW results for DFG 2D-3 (refinement level 4) into the repo as the archival validation target for HLX-341. Join bdforces_lv4 and pointvalues_lv4 on their shared time base, reduce to t / C_D / C_L / dp, and record the provenance and the exact transformation in projects/cylinder-flow/data/README.md per the Data Management Policy.",
+    "assignee": "priya.sharma",
+    "reporter": "elena.voss",
+    "priority": "Medium",
+    "epic_link": "HLX-330",
+    "created_at": "2026-06-22T13:30:00.000+0200",
+    "updated_at": "2026-06-29T17:10:00.000+0200",
+    "comments": [
+      {
+        "id": "10010",
+        "author": "Priya Sharma",
+        "body": "Landed in #7. The level-4 series carries 42016 dofs, about twice our protocol mesh - it is a finer independent solution, not an exact answer, which is the point. dp is front probe minus back probe, and the source probe points are the same (0.15, 0.2) / (0.25, 0.2) the protocol pins for us. No resampling or smoothing applied; the file is archival from here.",
+        "created_at": "2026-06-29T17:10:00.000+0200"
+      }
+    ]
+  },
+  {
+    "key": "HLX-335",
+    "type": "Task",
+    "summary": "IPCS solver with Crank-Nicolson / Adams-Bashforth and the graded cylinder mesh",
+    "status": "Done",
+    "description": "Stand up the cylinder-flow project: graded gmsh mesh around the cylinder (geometry.py), the IPCS splitting scheme with Crank-Nicolson and semi-implicit Adams-Bashforth on Taylor-Hood Q2/Q1 (solver.py), the case registry, and the CLI. Includes the global flux invariant check.",
+    "assignee": "marcus.chen",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": "HLX-330",
+    "created_at": "2026-06-01T09:00:00.000+0200",
+    "updated_at": "2026-06-19T15:22:00.000+0200",
+    "comments": [
+      {
+        "id": "10020",
+        "author": "Marcus Chen",
+        "body": "Landed in #6. The first prototype used plain backward Euler with a lagged convective term and it was visibly over-damped, so this is the Crank-Nicolson / Adams-Bashforth scheme the Handbook prescribes. The scheme is settled - anything that reports a study number runs on this. Verification against the benchmark is HLX-341.",
+        "created_at": "2026-06-19T15:22:00.000+0200"
+      }
+    ]
+  },
+  {
+    "key": "HLX-347",
+    "type": "Task",
+    "summary": "Reactor-channel geometry and meshing",
+    "status": "To Do",
+    "description": "Build the reactor-channel geometry (channel with periodic obstacles) and its graded mesh, reusing the cylinder-flow meshing helpers. Blocked: we are not building the reactor study on an unverified solver. Unblocks once HLX-341 shows the solver reproduces DFG 2D-3 inside the protocol band.",
+    "assignee": null,
+    "reporter": "elena.voss",
+    "priority": "Medium",
+    "epic_link": "HLX-330",
+    "created_at": "2026-07-09T11:30:00.000+0200",
+    "updated_at": "2026-07-09T11:30:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-312",
+    "type": "Bug",
+    "summary": "build_channel_mesh leaked a gmsh model when meshing failed",
+    "status": "Done",
+    "description": "A failure inside build_channel_mesh left gmsh initialised, so the next call in the same process raised a confusing 'model already exists' error instead of the real one. Wrapped the body in try/finally around gmsh.finalize().",
+    "assignee": "marcus.chen",
+    "reporter": "priya.sharma",
+    "priority": "Low",
+    "epic_link": "HLX-330",
+    "created_at": "2026-06-24T14:12:00.000+0200",
+    "updated_at": "2026-06-25T10:05:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-350",
+    "type": "Task",
+    "summary": "Lab ops: pin pandas in the solver image",
+    "status": "In Progress",
+    "description": "The solver image installs the FEniCSx stack from the distribution packages and everything else from pyproject. pandas floated to 3.x on the last rebuild. Pin it in the image build so runs are reproducible across rebuilds. No code change expected.",
+    "assignee": "tomas.keller",
+    "reporter": "tomas.keller",
+    "priority": "Low",
+    "epic_link": null,
+    "created_at": "2026-07-10T08:45:00.000+0200",
+    "updated_at": "2026-07-14T09:30:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-104",
+    "type": "Task",
+    "summary": "Migrate helixlab off the deprecated matplotlib backend shim",
+    "status": "To Do",
+    "description": "helixlab.plotting forces the Agg backend at import time. Harmless today but matplotlib has deprecated the shim we rely on. Low priority; do not bundle this into unrelated study work.",
+    "assignee": null,
+    "reporter": "tomas.keller",
+    "priority": "Low",
+    "epic_link": null,
+    "created_at": "2026-04-02T11:00:00.000+0200",
+    "updated_at": "2026-04-02T11:00:00.000+0200",
+    "comments": []
+  }
+]

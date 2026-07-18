@@ -1,0 +1,16 @@
+HLX-341 - Verify the cylinder-flow solver against the DFG 2D-3 benchmark
+
+The relevant information is in Jira, Slack, and the lab documentation.
+
+Goal
+Add the benchmark verification quantities to the cylinder-flow project in the a-vc-stem-lab monorepo so the incompressible Navier-Stokes solver can be checked against the published DFG 2D-3 reference series, run the verification, and open a reviewed pull request. Everything you need is described in Jira ticket HLX-341 and the sources it points to.
+
+Working directory
+- /home/model/a-vc-stem-lab (the solver is under projects/cylinder-flow/)
+
+Deliverable
+- Implement the drag coefficient, lift coefficient and cylinder pressure difference described in HLX-341, and wire them into the run so the production case records them over the run.
+- Validate the run against the archival reference series and report the deviations.
+- Follow the "Cylinder Flow Verification Protocol v1" document for the study parameters (discretisation, the coefficient definitions, the acceptance band). Where guidance conflicts, the protocol document is authoritative.
+- Include a short verification report in the PR body (the numbers you measured and whether they pass).
+- Open a pull request for review following the lab's contribution conventions.
