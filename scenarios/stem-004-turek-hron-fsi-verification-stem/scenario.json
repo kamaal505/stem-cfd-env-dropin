@@ -1,0 +1,15 @@
+{
+  "type": "stem-company",
+  "image_profile": "company",
+  "image_ref": "us-east1-docker.pkg.dev/gcp-taiga/toloka/vstem-mcp@sha256:1c47e56ead4849c3dcd5dc323eaa62f377037008530be53cbb1bb93a25330a71",
+  "world_tools": ["jira", "slack", "docs"],
+  "world_files": [
+    "jira_issues.json",
+    "slack.json",
+    "docs.json",
+    "repos/*.tar.gz"
+  ],
+  "taiga": {
+    "environment_key": "stem"
+  }
+}

@@ -1,0 +1,103 @@
+[
+  {
+    "key": "HLX-401",
+    "type": "Task",
+    "summary": "Extend cylinder-flow verification to the flexible baffle (fluid-structure interaction)",
+    "status": "In Progress",
+    "description": "*About:*\n\nHLX-347 (reactor-channel geometry) is unblocked now that HLX-341 verified the cylinder-flow solver against DFG 2D-3. Mechanical's final design for the flow-control baffle downstream of the obstruction (see Reactor Channel Study Plan rev. C, section 4) is a 0.02 m stainless shim, not the rigid deflector the original concept assumed - it visibly moves in the channel flow during the vendor's bench test. The rigid-obstacle solver in projects/cylinder-flow/ has no notion of a moving boundary, so it cannot represent this. Before the reactor study can use the baffle geometry, we need a solver that couples the fluid to the baffle's own motion and a case that verifies it against a published benchmark - the same standard HLX-341 set for the rigid case.\n\nprojects/flag-fsi/ has the mesh and case scaffolding (channel, cylinder, baffle geometry; case registry) but no physics beyond that - geometry.py builds the mesh, cases.py defines the case parameters, and everything else is a stub. The rigid cylinder-flow solver in projects/cylinder-flow/ is verified and frozen (HLX-341) - do not modify it; projects/flag-fsi/ is its own project, reusing only the meshing conventions.\n\n*Scope:*\n\n* Implement the fluid solver, the baffle's structural solver, the mesh-motion/coupling between them, and the case driver in projects/flag-fsi/.\n* Validate the production case against a published reference series for the benchmark geometry and parameters pinned in FSI Verification Protocol v1 (see Docs).\n* Open a reviewed PR with a verification report in the body.\n\n*Acceptance Criteria:*\n\n* The production case in projects/flag-fsi/ completes and records the benchmark quantities defined in Protocol v1 section 4 as a time series, written the same way HLX-341's coefficients were (helixlab.io.save_timeseries_csv).\n* Validation compares a freshly produced run against the reference series checked in under projects/flag-fsi/data/reference/ and reports the deviations. Real recomputation against the file, not hardcoded numbers - same bar HLX-341 set.\n* Do not widen the acceptance criteria or change the pinned discretisation/parameters in Protocol v1 to make a failing comparison pass - open a discussion in #proj-flow instead, same as the rigid case.\n* PR body carries a short verification report: the measured quantities, their deviations against the reference, and which case/parameters produced them.\n* projects/cylinder-flow/ is untouched.\n\n*Notes:*\n\n* This is a genuinely different kind of solver than HLX-341 - the baffle moves, the mesh has to move with it, and the fluid and structure are coupled. Budget real design time for the coupling approach; it is not a drop-in extension of the rigid case.\n* The production case is expensive - budget accordingly and use the smoke case in cases.py to iterate.",
+    "assignee": "priya.sharma",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": "HLX-330",
+    "created_at": "2026-07-20T09:30:00.000+0200",
+    "updated_at": "2026-07-21T14:10:00.000+0200",
+    "comments": [
+      {
+        "id": "10101",
+        "author": "Elena Voss",
+        "body": "FSI Verification Protocol v1 is in Docs, linked from this ticket. Section 2 pins the geometry and material/flow parameters, section 4 pins which quantities we're validating and where the reference series lives. Treat it as authoritative the same way Protocol v1 governed HLX-341 - if anything elsewhere conflicts with it, the protocol wins.",
+        "created_at": "2026-07-20T09:41:00.000+0200"
+      },
+      {
+        "id": "10102",
+        "author": "Marcus Chen",
+        "body": "Heads up that this is a heavier lift than HLX-341 was - that one added verification to an already-working solver. Here you're building the coupled solver itself. I don't have a strong opinion yet on partitioned vs. monolithic coupling for this - there are real tradeoffs and I'd rather you make the call and defend it in the PR than have me hand you one. Same review process as before: feature branch, I review before merge.",
+        "created_at": "2026-07-20T10:15:00.000+0200"
+      },
+      {
+        "id": "10103",
+        "author": "Priya Sharma",
+        "body": "Picking this up. projects/flag-fsi/geometry.py already builds the channel+cylinder+baffle mesh with the fluid/solid subdomains tagged (reused the grading approach from cylinder-flow/geometry.py). Starting on the solid side first since I want the baffle's own dynamics right before I couple it to anything.",
+        "created_at": "2026-07-21T09:20:00.000+0200"
+      },
+      {
+        "id": "10104",
+        "author": "Elena Voss",
+        "body": "One thing from the vendor bench test worth having in your head while you validate: the shim visibly settles into a large, sustained oscillation once the flow is established - it does not just deflect and hold like a stiffer baffle would. If your solver's baffle just deflects to a fixed position and stays there, that is not matching what we're actually seeing on the bench, whatever the numbers say.",
+        "created_at": "2026-07-21T11:05:00.000+0200"
+      },
+      {
+        "id": "10105",
+        "author": "Elena Voss",
+        "body": "Handing this to Priya for now - I'm out most of next week. Everything I know is in the ticket and the protocol.",
+        "created_at": "2026-07-21T14:10:00.000+0200"
+      }
+    ]
+  },
+  {
+    "key": "HLX-330",
+    "type": "Epic",
+    "summary": "Reactor-channel flow modelling",
+    "status": "In Progress",
+    "description": "Resolve the flow field through the reactor channel and eventually couple it to the MK-7 kinetics as a transport term. First milestone was a solver we could defend against a published benchmark (HLX-341, done). Mechanical's final baffle design turned out to be flexible, not rigid (see HLX-401) - the reactor geometry work in HLX-347 is now waiting on a verified FSI solver instead.",
+    "assignee": "elena.voss",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": null,
+    "created_at": "2026-05-18T10:00:00.000+0200",
+    "updated_at": "2026-07-21T14:10:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-347",
+    "type": "Task",
+    "summary": "Reactor-channel geometry and meshing",
+    "status": "Blocked",
+    "description": "Build the reactor-channel geometry (channel with periodic obstacles and the flow-control baffle) and its graded mesh, reusing the cylinder-flow meshing helpers. Blocked again: unblocked by HLX-341, now blocked on HLX-401 - the baffle in the final mechanical design is flexible, and we are not building the reactor study on an unverified FSI solver either.",
+    "assignee": null,
+    "reporter": "elena.voss",
+    "priority": "Medium",
+    "epic_link": "HLX-330",
+    "created_at": "2026-07-09T11:30:00.000+0200",
+    "updated_at": "2026-07-20T09:35:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-341",
+    "type": "Task",
+    "summary": "Verify the cylinder-flow solver against the DFG 2D-3 benchmark",
+    "status": "Done",
+    "description": "Verified the rigid cylinder-flow solver against DFG 2D-3. See PR history. Solver in projects/cylinder-flow/ is frozen from here - HLX-401 is a separate project, not a modification of this one.",
+    "assignee": "priya.sharma",
+    "reporter": "elena.voss",
+    "priority": "High",
+    "epic_link": "HLX-330",
+    "created_at": "2026-07-07T09:15:00.000+0200",
+    "updated_at": "2026-07-18T10:00:00.000+0200",
+    "comments": []
+  },
+  {
+    "key": "HLX-395",
+    "type": "Task",
+    "summary": "Lab ops: shared box disk cleanup",
+    "status": "To Do",
+    "description": "The shared compute box is at 85% disk. Old run outputs under ~/scratch older than 90 days can go. Not urgent but will be if it's ignored another month.",
+    "assignee": "tomas.keller",
+    "reporter": "tomas.keller",
+    "priority": "Low",
+    "epic_link": null,
+    "created_at": "2026-07-15T08:00:00.000+0200",
+    "updated_at": "2026-07-15T08:00:00.000+0200",
+    "comments": []
+  }
+]

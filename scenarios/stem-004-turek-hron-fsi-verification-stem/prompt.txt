@@ -1,0 +1,16 @@
+HLX-401 - Extend cylinder-flow verification to the flexible baffle (fluid-structure interaction)
+
+The relevant information is in Jira, Slack, and the lab documentation.
+
+Goal
+Implement and verify a fluid-structure interaction solver for the flag-fsi project in the a-vc-stem-lab monorepo, so the flexible baffle behind the cylinder obstruction can be modeled ahead of the reactor-channel geometry work. Everything you need is described in Jira ticket HLX-401 and the sources it points to.
+
+Working directory
+- /home/model/a-vc-stem-lab (the new project is under projects/flag-fsi/; the verified rigid cylinder-flow solver is under projects/cylinder-flow/ - do not modify it)
+
+Deliverable
+- Implement the fluid solver, the baffle's structural solver, the coupling between them (including the moving mesh), and the case driver in projects/flag-fsi/.
+- Follow the "FSI Verification Protocol v1" document for the study parameters (geometry, materials, flow conditions, what to report). Where guidance conflicts, the protocol document is authoritative.
+- Validate the production case against a published benchmark for a comparable geometry and flow regime, and report the comparison and how far the result was validated.
+- Include a verification report in the PR body (approach taken, measured behavior, comparison against the reference, validation scope).
+- Open a pull request for review following the lab's contribution conventions.
