@@ -1,9 +1,3 @@
-<!--
-DRAFT, 2026-07-23. Written against grader-authoring-cheatsheet.md's structure and
-authentic-difficulty-principle.md's standard (reward genuine engineering judgment and legitimate
-alternative approaches, not just breadcrumb-following). Not yet regraded against transcripts.
--->
-
 ### What a senior engineer would do
 
 **Treats the coupling-scheme choice as a real engineering decision, not a default.** Monolithic
@@ -34,8 +28,3 @@ fluid-structure problem is a materially different, harder kind of solver-buildin
 adding a verification wrapper to an already-correct solver was — treating it as a small
 extension of the rigid case (reusing conventions, sure; expecting the same effort level) is a
 miscalibration worth noticing and correcting for.
-
-### Additional patterns to watch for
-
-*(none yet — populate once transcripts exist, per the cheatsheet's guidance: delete this section
-if it stays empty, don't pad it with generic conduct that holds for any task.)*

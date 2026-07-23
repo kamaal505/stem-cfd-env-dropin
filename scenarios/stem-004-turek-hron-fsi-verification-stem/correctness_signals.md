@@ -1,13 +1,3 @@
-<!--
-DRAFT, 2026-07-23. Written against grader-authoring-cheatsheet.md's five-section structure and
-authentic-difficulty-principle.md's standard. Grounded in this session's own golden-solution
-work (internal_tooling/stem-004-turek-hron-fsi/) — every trap named below is a real bug we hit,
-not a hypothetical, and the acceptance bar reflects the scope decision confirmed 2026-07-23
-(README.md): physically plausible over a demonstrable ~0.5s window, not tight multi-period
-reference-matching. Not yet regraded against transcripts - a draft to iterate, per the correctness
-loop's own stated bar ("brief quality, not a score threshold").
--->
-
 ## Domain & architecture context
 
 `projects/flag-fsi/` extends the verified rigid cylinder-flow solver (`projects/cylinder-flow/`,
@@ -70,10 +60,22 @@ scheme reproduced that instability empirically: stable and smooth at first, then
 noisy growth, then outright solver failure, well before covering the case's required duration.
 A submission that chooses a one-pass partitioned scheme and either doesn't notice it becomes
 unstable, or notices and doesn't address it (via sub-iteration, relaxation, or switching
-approach), has not delivered a working verification — but a submission that chooses partitioned
-coupling *and* handles the stability question (sub-iterating to convergence, applying
-relaxation, or explicitly justifying a monolithic choice instead) should be credited for sound
-engineering judgment, not penalized for not defaulting to monolithic.
+approach), has not delivered a working verification. A submission that chooses partitioned
+coupling *and* demonstrably handles the stability question (sub-iterating to convergence,
+applying relaxation, and showing the resulting run stays stable where the naive version did not)
+should be credited for sound engineering judgment.
+
+**A monolithic choice earns the same credit only when it is grounded in something quantitative
+or empirical, not asserted from general knowledge.** Citing the density ratio and invoking "added-mass
+instability" by name is a correct fact, but stating it is not the same as showing it: a submission
+that picks monolithic purely on the strength of a qualitative, textbook-level statement — with no
+back-of-envelope stability estimate (e.g. an added-mass/density-ratio bound, a rough partitioned
+sub-step check) and no attempt to even briefly run the staggered alternative to see it degrade —
+has made a plausible-sounding assertion, not an engineering judgment, and should not receive full
+credit on this signal. The bar is the same one the rigid case set for the benchmark comparison
+itself: a claim about behavior needs a computation behind it, not just correct vocabulary. Either
+a short empirical demonstration (a truncated staggered run showing the instability starting to
+appear) or a quantitative estimate clears this bar; a purely prose justification does not.
 
 **Reference comparison that isn't a real, reproducible computation.** Same standard the rigid
 case set: the deviation numbers in the PR/report must come from loading the actual reference
@@ -102,11 +104,22 @@ series and computing against the actual production run, not hardcoded or asserte
 - **Choice of mesh-motion technique** (harmonic/Laplace extension, linear elasticity extension,
   or another legitimate approach), provided it's applied consistently from the reference
   configuration and demonstrably keeps the mesh valid over the run.
-- **Not reaching a full multi-period, indefinitely-stable run.** The verified window only needs
-  to be physically plausible and demonstrably stable over a reasonable duration — it does not
-  need to run indefinitely or match a published reference series to tight numerical tolerance.
-  A submission that is honest about the extent of what it validated, and why, should not be
-  penalized for not chasing indefinite stability.
+- **Not reaching a full multi-period, indefinitely-stable run** — *provided* the run that was
+  actually achieved clears the inflow ramp and shows the tip motion beginning to depart from a
+  monotonic, still-growing transient (a local peak, a sign change in velocity, amplitude ceasing
+  to track the ramp profile) rather than stopping mid-ramp at a deflection still orders of
+  magnitude below where the transient is expected to plateau. It does not need to run indefinitely
+  or match a published reference series to tight numerical tolerance.
+
+  **A run that ends while still deep in the ramp has not demonstrated anything about the baffle's
+  dynamic behavior, however honestly that shortfall is reported, and should be scored as an
+  incomplete verification on this signal — not merely discounted to "partial."** Honesty about a
+  gap changes how a shortfall is judged; it does not convert a non-result into a result. If the
+  environment's time budget makes even reaching past the ramp infeasible, a submission can still
+  earn credit here by demonstrating the same physics on a cheaper stand-in that reaches the
+  behavior (e.g. a coarser mesh, a shorter reference-matched sub-case, or a scaled-down analogue)
+  and explaining why that stand-in is representative — silence past "I ran out of time" is not
+  sufficient on its own.
 - **Legitimate alternative discretizations, timesteps, or solver configurations**, provided they
   are justified and the result is verified against something (a cross-check, a conservation
   property, a sanity bound), not merely asserted.
@@ -124,3 +137,9 @@ engineering choices (coupling scheme, mesh-motion technique, timestep) can diffe
 particular reference implementation provided they're deliberate and the result is verified, not
 asserted. A PR/report that names what was and wasn't validated, and why, reads as trustworthy in
 the same way the rigid-case verification report did.
+
+A submission that never gets past the inflow ramp, and whose only evidence for its coupling
+choice is a correctly-worded but unverified paragraph about added-mass instability, has produced
+a plausible-sounding report, not a verification — score it well short of the above regardless of
+how forthright its caveats are. Fluent, honest hedging is not a substitute for either running the
+case far enough to see the physics or backing the coupling decision with a real number.

@@ -21,7 +21,7 @@
       {
         "id": "10102",
         "author": "Marcus Chen",
-        "body": "Heads up that this is a heavier lift than HLX-341 was - that one added verification to an already-working solver. Here you're building the coupled solver itself. I don't have a strong opinion yet on partitioned vs. monolithic coupling for this - there are real tradeoffs and I'd rather you make the call and defend it in the PR than have me hand you one. Same review process as before: feature branch, I review before merge.",
+        "body": "Heads up that this is a heavier lift than HLX-341 was - that one added verification to an already-working solver. Here you're building the coupled solver itself, including how the fluid and structure exchange information at the interface. Same review process as before: feature branch, I review before merge.",
         "created_at": "2026-07-20T10:15:00.000+0200"
       },
       {
@@ -33,7 +33,7 @@
       {
         "id": "10104",
         "author": "Elena Voss",
-        "body": "One thing from the vendor bench test worth having in your head while you validate: the shim visibly settles into a large, sustained oscillation once the flow is established - it does not just deflect and hold like a stiffer baffle would. If your solver's baffle just deflects to a fixed position and stays there, that is not matching what we're actually seeing on the bench, whatever the numbers say.",
+        "body": "One thing from the vendor bench test worth having in your head while you validate: the shim visibly settles into a large, sustained oscillation once the flow is established, not a fixed deflected position.",
         "created_at": "2026-07-21T11:05:00.000+0200"
       },
       {
