@@ -65,17 +65,31 @@ coupling *and* demonstrably handles the stability question (sub-iterating to con
 applying relaxation, and showing the resulting run stays stable where the naive version did not)
 should be credited for sound engineering judgment.
 
-**A monolithic choice earns the same credit only when it is grounded in something quantitative
-or empirical, not asserted from general knowledge.** Citing the density ratio and invoking "added-mass
-instability" by name is a correct fact, but stating it is not the same as showing it: a submission
-that picks monolithic purely on the strength of a qualitative, textbook-level statement — with no
-back-of-envelope stability estimate (e.g. an added-mass/density-ratio bound, a rough partitioned
-sub-step check) and no attempt to even briefly run the staggered alternative to see it degrade —
-has made a plausible-sounding assertion, not an engineering judgment, and should not receive full
-credit on this signal. The bar is the same one the rigid case set for the benchmark comparison
-itself: a claim about behavior needs a computation behind it, not just correct vocabulary. Either
-a short empirical demonstration (a truncated staggered run showing the instability starting to
-appear) or a quantitative estimate clears this bar; a purely prose justification does not.
+**A monolithic choice earns full credit only when it is backed by an actual run, not an estimate.**
+Citing the density ratio and invoking "added-mass instability" by name is a correct fact, but
+stating it is not the same as showing it — and a back-of-envelope stability bound is a lower bar
+than this task's compute budget requires: nothing about the production case's cost prevents
+actually running the cheaper alternative. Full credit on this signal requires actually executing a
+truncated one-pass partitioned (staggered) run on the production case and showing it degrade
+(growing noise, instability, or outright divergence) where the monolithic run stays stable — the
+same empirical standard the rigid case set for the benchmark comparison itself. A back-of-envelope
+estimate with no run behind it is worth partial credit at most. A submission that picks monolithic
+purely on the strength of a qualitative, textbook-level statement, or a citation to prior published
+validation of the same scheme, with no run of any kind on this case, has made a plausible-sounding
+assertion, not an engineering judgment — this alone should cap overall correctness at roughly
+**0.5**, regardless of how sound the rest of the implementation is, on the same "well short"
+standard as the ramp-floor case below, not a fractional deduction on one signal among several.
+
+**Attributing the amplitude/frequency gap to mesh resolution without ever running a finer mesh.**
+A timestep (dt) refinement study addresses temporal resolution, not spatial resolution — it is not
+evidence for a spatial-resolution hypothesis, however carefully it's described. A submission that
+diagnoses "the mesh is too coarse" as the cause of a large quantitative gap must actually run at
+least one finer spatial resolution (a smaller `res_min_factor`, or equivalent local refinement near
+the baffle/interface) on the production case and show the amplitude/frequency trending toward the
+reference — not merely assert plausibility from a temporal-refinement check or a citation to
+another tool's published convergence behavior. Compute cost is not a constraint on this task; an
+unexecuted hypothesis is not a diagnosis, and should be treated the same as the unverified
+coupling-choice case above.
 
 **Reference comparison that isn't a real, reproducible computation.** Same standard the rigid
 case set: the deviation numbers in the PR/report must come from loading the actual reference
@@ -96,6 +110,15 @@ series and computing against the actual production run, not hardcoded or asserte
 4. **Reporting static-deflection behavior as the verified result** for a case whose defining
    behavior is sustained oscillation, because the run wasn't carried far enough in time to see
    the oscillation establish.
+5. **Right qualitative behavior (sustained, non-decaying oscillation), wrong dynamical mode.** A
+   forced, small-amplitude response driven by vortex shedding (or any other secondary excitation)
+   can look like "sustained oscillation, not static deflection" at a glance — non-decaying,
+   present in every time window, a clean spectral peak — while being an entirely different
+   phenomenon from the self-excited flutter limit cycle the benchmark is defined by. A submission
+   that only checks *whether* the tip keeps moving, without checking *at what frequency and
+   relative to what forcing*, can clear the static-deflection trap while still having captured the
+   wrong physics. Treat this the same as failure 4, not as a milder "amplitude is a bit off"
+   finding — it is a different failure category from a converged-but-quantitatively-off result.
 
 ## Don't penalize for
 
@@ -123,6 +146,20 @@ series and computing against the actual production run, not hardcoded or asserte
 - **Legitimate alternative discretizations, timesteps, or solver configurations**, provided they
   are justified and the result is verified against something (a cross-check, a conservation
   property, a sanity bound), not merely asserted.
+- **A production or smoke run cut off by signal 15 (SIGTERM) rather than by the solver's own
+  divergence.** The sandbox's bash tool can restart mid-run (its 300s-per-command limit against a
+  multi-hour production case forces background execution) and this has been observed to kill an
+  in-progress backgrounded solver process. In the transcript this appears as a PETSc/MPI abort
+  immediately preceded by the line `Caught signal number 15 Terminate: Some process (or the batch
+  system) has told this process to end`. That signature is an environment artifact, not evidence
+  of Newton non-convergence, mesh inversion, a coupling instability, or any other physics/solver
+  defect — do not score it against the signals above (converged-but-wrong, added-mass instability,
+  mesh degradation, etc.). Evaluate the run on whatever genuine progress it reached before the
+  signal, under the same ramp-floor standard as any other truncated run, and do not additionally
+  penalize the submission for the harness-caused interruption itself. A crash showing the *same
+  surface symptoms* (abort, non-convergence, inversion) but **without** the signal-15 line
+  immediately preceding it is not covered by this exception and should still be evaluated as a
+  genuine physics/solver failure under the relevant signal above.
 
 ## Feel of a correct answer
 
@@ -143,3 +180,13 @@ choice is a correctly-worded but unverified paragraph about added-mass instabili
 a plausible-sounding report, not a verification — score it well short of the above regardless of
 how forthright its caveats are. Fluent, honest hedging is not a substitute for either running the
 case far enough to see the physics or backing the coupling decision with a real number.
+
+The same ceiling applies past the ramp. A submission that clears the ramp and reaches a genuine
+sustained, non-decaying oscillation, but (a) never ran the cheaper staggered alternative it needed
+to justify its coupling choice, or (b) never ran a finer mesh to test its own resolution
+hypothesis, or (c) never checked whether the oscillation it captured is at the reference's
+frequency rather than some other excited mode, has produced a well-engineered partial result, not
+a completed verification. Cap it around 0.5, in the same "well short" territory as the pre-ramp
+case — not a fractional deduction on one signal among several. Every one of these checks is
+affordable within this task's compute budget; skipping them is a choice, not a constraint, and
+honest reporting of the gap does not raise the ceiling.
